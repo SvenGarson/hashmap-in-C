@@ -6,6 +6,7 @@
 - Ability to store anything for a given hashmap (this means custom key compare function on creation)
 - Write a wrapper to use the thing
 - Growing of the associative array when certain load factor reached in terms of bucket count
+- add return values to functions that report the result of the operation when useful
 - Q & A
   + Can a bucket/node key be NULL?
     Yes, a key of null represents an un-used bucket node?
@@ -14,6 +15,12 @@
 
 ## Finalizing
 - Test suite
+  + Hash function for different and the same things; argument edge cases
+  + Check collision in a dictionary
+  + Different length of overlapping keys that must not collide
+    - abc & ab
+    in both direction where the new one is longer; the same size or shorter than the node data
+  + cannot insert duplicates for a particular key data type
 - Documentation
   + Analyzing edge cases and limitations, like the largest number of buckets etc.
 
