@@ -1,5 +1,5 @@
 # Source files to compile
-OBJS = source/tests.c source/hashmap.c
+OBJS = source/tests.c source/hashmap_generic.c
 
 # Choose compiler
 CC = gcc
@@ -12,6 +12,7 @@ OBJ_NAME = builds/driver
 
 # Targets
 compile : $(OBJS)
+	cls
 	$(CC) $(OBJS) $(COMPILER_FLAGS) -o $(OBJ_NAME)
 
 run_tests:

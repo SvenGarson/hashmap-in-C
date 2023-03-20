@@ -2,19 +2,23 @@
  An implementation of a hashmap in C
 
 ## Requirements
-- Set value for key
-- Delete value for key
-- Get value for key
-- No empty string keys
+- Key and value requirements
+- Ability to store anything for a given hashmap (this means custom key compare function on creation)
+- Write a wrapper to use the thing
+- Growing of the associative array when certain load factor reached in terms of bucket count
+- Q & A
+  + Can a bucket/node key be NULL?
+    Yes, a key of null represents an un-used bucket node?
+  + Can a bucket/node key be NULL?
+    Just enable using code to specify NULL values for now and see if it's useful
 
 ## Finalizing
-- Testing
+- Test suite
 - Documentation
+  + Analyzing edge cases and limitations, like the largest number of buckets etc.
 
-## Hashmap example usage
-- Insertion
-
-  hashmap
+## Implementation details to enforce
+- Bucket node with NULL key is un-used
 
 ## Interface
 - Insertion
@@ -25,3 +29,4 @@
   + Delete value (void *) for key (char *)
 - Utility
   + Contains value (void *) for key (char *)
+- Debug printing the contents
