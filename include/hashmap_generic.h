@@ -42,7 +42,7 @@ void hashmap_generic_set(
 	size_t value_size
 );
 
-void dhashmap_generic_delete(
+void hashmap_generic_delete(
 	hashmap_generic_instance_ts * p_hashmap,
 	const void * const p_key,
 	size_t key_size

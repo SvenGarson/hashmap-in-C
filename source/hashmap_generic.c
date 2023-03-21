@@ -187,23 +187,16 @@ void hashmap_generic_set(
 	p_search_bucket_parent->p_next = p_new_chain_node;
 }
 
-void dhashmap_generic_delete(
+void hashmap_generic_delete(
 	hashmap_generic_instance_ts * p_hashmap,
 	const void * const p_key,
 	size_t key_size
 )
 {
-	/*
-			- hash the key
-			- check all buckets at hash index
-				+ if keys collid
-					- deallocate the node
-					- connect parent and child node
-	*/
 	/* TODO-GS: Again, guard against weird arguments */
 	const uint32_t key_hash = fnv32_hash((const char *) p_key, key_size);
 	const uint32_t hashed_key_bucket_index = key_hash % p_hashmap->bucket_count;
-	hashmap_generic_bucket_ts * const p_bucket = p_hashmap->pp_buckets[hashed_key_bucket_index];
+	hashmap_generic_bucket_ts * p_bucket = p_hashmap->pp_buckets[hashed_key_bucket_index];
 
 	/* Nothing to do for empty bucket */
 	if (p_bucket == NULL)
@@ -221,7 +214,7 @@ void dhashmap_generic_delete(
 		)
 		{
 			/* Found chain bucket node to delete */
-			const hashmap_generic_bucket_ts * const p_search_bucket_child = p_search_bucket->p_next;
+			hashmap_generic_bucket_ts * p_search_bucket_child = p_search_bucket->p_next;
 
 			/* Deallocate the node to delete */
 			free(p_search_bucket->key.p_data);
@@ -232,14 +225,13 @@ void dhashmap_generic_delete(
 			if (p_search_bucket_parent == NULL)
 			{
 				/* Delete the first node of the bucket chain */
-				/* ??? */
+				p_hashmap->pp_buckets[hashed_key_bucket_index] = p_search_bucket_child;
 			}
 			else
 			{
 				/* Delete subsequent node of the bucket chain */
-				/* ??? */
+				p_search_bucket_parent->p_next = p_search_bucket_child;
 			}
-				
 		}
 
 		/* Keep track of parent */
