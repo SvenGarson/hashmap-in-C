@@ -13,6 +13,8 @@ int main(void)
 		return -1;
 	}
 
+	hashmap_generic_visualize(p_hashmap, "Initial state");
+
 	/* Use interface */
 	const char key1[] = "Iron Man";
 	const char value1[] = "Quote: 'I am Iron Man'";
@@ -37,8 +39,15 @@ int main(void)
 		printf("\nEntry bucket: %-3d Key: %-30s Value: %-30s", entry.bucket_index, (char *) entry.p_key, (char *) entry.p_value);
 	}
 
-	hashmap_generic_destroy(&p_hashmap);
+	hashmap_generic_visualize(p_hashmap, "Before deletion");
+	hashmap_generic_delete(p_hashmap, key1, sizeof(key1));
+	hashmap_generic_delete(p_hashmap, key2, sizeof(key2));
+	hashmap_generic_delete(p_hashmap, key3, sizeof(key3));
+	hashmap_generic_delete(p_hashmap, key3, sizeof(key3));
+	hashmap_generic_delete(p_hashmap, key3, sizeof(key3));
+
 	hashmap_generic_visualize(p_hashmap, "After deletion");
+	hashmap_generic_destroy(&p_hashmap);
 
 	/* Return to OS successfully */
 	return 0;

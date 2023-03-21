@@ -7,6 +7,9 @@
 /* Defined */
 #define HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS (16)
 
+/* Constants */
+static const float HASHMAP_GENERIC_LOAD_FACTOR = 0.75f;
+
 /* Datatypes */
 typedef enum {
 	HASHMAP_GENERIC_FALSE = 0,
@@ -37,7 +40,7 @@ void hashmap_generic_destroy(hashmap_generic_instance_ts ** pp_hashmap);
 /* Interface function prototypes - Debugging */
 void hashmap_generic_visualize(const hashmap_generic_instance_ts * p_hashmap, const char * p_tag);
 
-/* Interface function prototypes - Insert; Retrieval; Deletion */
+/* Interface function prototypes - Insertion; Retrieval; Deletion */
 hashmap_generic_bool_te hashmap_generic_set(
 	hashmap_generic_instance_ts * p_hashmap,
 	const void * const p_key,

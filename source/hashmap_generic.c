@@ -52,33 +52,6 @@ static void destroy_bucket_node(hashmap_generic_bucket_ts * p_bucket_node_to_del
 	free(p_bucket_node_to_delete);
 }
 
-/* Interface function definitions */
-hashmap_generic_instance_ts * hashmap_generic_create(void)
-{
-	/* Allocate generic hashmap instance */
-	hashmap_generic_instance_ts * const p_new_generic_hashmap = malloc(sizeof(hashmap_generic_instance_ts));
-	if (p_new_generic_hashmap == NULL)
-	{
-		return NULL;
-	}
-
-	/* Success allocating the hashmap instance - Now allocate and initialize the hashmap buckets */
-	p_new_generic_hashmap->bucket_count = HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS;
-	p_new_generic_hashmap->entry_count = 0;
-	p_new_generic_hashmap->pp_buckets = malloc(sizeof(hashmap_generic_bucket_ts *) * p_new_generic_hashmap->bucket_count);
-	if (p_new_generic_hashmap->pp_buckets == NULL)
-	{
-		free(p_new_generic_hashmap);
-		return NULL;
-	}
-
-	/* Success allocating array of pointers to buckets - Now initialize the buckets to NULL */
-	for (int bucket_index = 0; bucket_index < p_new_generic_hashmap->bucket_count; bucket_index++)
-		p_new_generic_hashmap->pp_buckets[bucket_index] = NULL;
-
-	return p_new_generic_hashmap;
-}
-
 static hashmap_generic_bool_te nodes_match(
 	const hashmap_generic_bucket_ts * const p_bucket,
 	const char * p_key,
@@ -94,61 +67,7 @@ static hashmap_generic_bool_te nodes_match(
 	) ? HASHMAP_GENERIC_TRUE : HASHMAP_GENERIC_FALSE;
 }
 
-void hashmap_generic_destroy(hashmap_generic_instance_ts ** pp_hashmap)
-{
-	if (pp_hashmap == NULL || (*pp_hashmap)->bucket_count <= 0)
-		return;
-	
-	/* Deallocate all buckets along with the corresponding key and value */
-	hashmap_generic_bucket_ts * p_deletion_bucket = (*pp_hashmap)->pp_buckets[0];
-	while (p_deletion_bucket != NULL)
-	{
-		hashmap_generic_bucket_ts * p_deletion_bucket_child = p_deletion_bucket->p_next;
-		destroy_bucket_node(p_deletion_bucket);
-		p_deletion_bucket = p_deletion_bucket_child;
-	}
-
-	/* Deallocate the hashmap instance */
-	free(*pp_hashmap);
-	*pp_hashmap = NULL;
-}
-
-/* Interface function prototypes - Debugging */
-void hashmap_generic_visualize(const hashmap_generic_instance_ts * p_hashmap, const char * p_tag)
-{
-	if (p_hashmap == NULL)
-	{
-		printf("\n\nHashmap tagged '%s' is not initialized\n", p_tag ? p_tag : "N/A");
-		return;
-	}
-		
-	printf("\n\n# Visualizing generic hashmap tagged '%s' with '%d' entries:", p_tag, p_hashmap->entry_count);
-
-	unsigned int buckets_logged = 0;
-	for (int bucket_index = 0; bucket_index < p_hashmap->bucket_count; bucket_index++)
-	{
-		const hashmap_generic_bucket_ts * p_current_bucket = p_hashmap->pp_buckets[bucket_index];
-		if (p_current_bucket == NULL)
-			continue;
-
-		printf("\n\tBucket %4d/%-4d", bucket_index + 1, p_hashmap->bucket_count);
-		for (int bucket_entry_index = 0; p_current_bucket != NULL; p_current_bucket = p_current_bucket->p_next, bucket_entry_index++)
-		{
-			/*printf("\n\t  %-4d p_key: %-40p p_value: %-p", bucket_entry_index, p_current_bucket->key.p_data, p_current_bucket->p_value);*/
-			/* TODO-GS: Show the pointers only or apply function through the wrapper? */
-			printf("\n\t  %-4s (%3u bytes) p_key: %-40s p_value: %-30s", "", p_current_bucket->key.data_size, (const char *)p_current_bucket->key.p_data, ((char *)p_current_bucket->p_value));
-		}
-
-		buckets_logged++;
-	}
-
-	if (0x00 == buckets_logged)
-		printf("\n\n\tEmpty\n");
-	printf("\n");
-}
-
-/* Interface function prototypes - Insert; Retrieval; Deletion */
-hashmap_generic_bool_te hashmap_generic_set(
+static hashmap_generic_bool_te hashmap_generic_set_entry(
 	hashmap_generic_instance_ts * p_hashmap,
 	const void * const p_key,
 	size_t key_size,
@@ -162,7 +81,7 @@ hashmap_generic_bool_te hashmap_generic_set(
 	const uint32_t hashed_key_bucket_index = key_hash % p_hashmap->bucket_count;
 	hashmap_generic_bucket_ts * const p_bucket = p_hashmap->pp_buckets[hashed_key_bucket_index];
 
-	/* Copy key and value memory - TODO-GS: Abstract as create node? */
+	/* Copy key and value memory */
 	void * p_key_copy = malloc(key_size);
 	void * p_value_copy = malloc(value_size);
 	if (p_key_copy == NULL || p_value_copy == NULL)
@@ -223,6 +142,106 @@ hashmap_generic_bool_te hashmap_generic_set(
 	}
 
 	return HASHMAP_GENERIC_FALSE;
+}
+
+/* Interface function definitions */
+hashmap_generic_instance_ts * hashmap_generic_create(void)
+{
+	/* Allocate generic hashmap instance */
+	hashmap_generic_instance_ts * const p_new_generic_hashmap = malloc(sizeof(hashmap_generic_instance_ts));
+	if (p_new_generic_hashmap == NULL)
+	{
+		return NULL;
+	}
+
+	/* Success allocating the hashmap instance - Now allocate and initialize the hashmap buckets */
+	p_new_generic_hashmap->bucket_count = HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS;
+	p_new_generic_hashmap->entry_count = 0;
+	p_new_generic_hashmap->pp_buckets = malloc(sizeof(hashmap_generic_bucket_ts *) * p_new_generic_hashmap->bucket_count);
+	if (p_new_generic_hashmap->pp_buckets == NULL)
+	{
+		free(p_new_generic_hashmap);
+		return NULL;
+	}
+
+	/* Success allocating array of pointers to buckets - Now initialize the buckets to NULL */
+	for (int bucket_index = 0; bucket_index < p_new_generic_hashmap->bucket_count; bucket_index++)
+		p_new_generic_hashmap->pp_buckets[bucket_index] = NULL;
+
+	return p_new_generic_hashmap;
+}
+
+void hashmap_generic_destroy(hashmap_generic_instance_ts ** pp_hashmap)
+{
+	if (pp_hashmap == NULL || (*pp_hashmap)->bucket_count <= 0)
+		return;
+	
+	/* Deallocate all buckets along with the corresponding key and value */
+	hashmap_generic_bucket_ts * p_deletion_bucket = (*pp_hashmap)->pp_buckets[0];
+	while (p_deletion_bucket != NULL)
+	{
+		hashmap_generic_bucket_ts * p_deletion_bucket_child = p_deletion_bucket->p_next;
+		destroy_bucket_node(p_deletion_bucket);
+		p_deletion_bucket = p_deletion_bucket_child;
+	}
+
+	/* Deallocate the hashmap instance */
+	free(*pp_hashmap);
+	*pp_hashmap = NULL;
+}
+
+/* Interface function prototypes - Debugging */
+void hashmap_generic_visualize(const hashmap_generic_instance_ts * p_hashmap, const char * p_tag)
+{
+	if (p_hashmap == NULL)
+	{
+		printf("\n\nHashmap tagged '%s' is not initialized\n", p_tag ? p_tag : "N/A");
+		return;
+	}
+		
+	printf("\n\n# Visualizing generic hashmap tagged '%s' with '%d' entries:", p_tag, p_hashmap->entry_count);
+
+	unsigned int buckets_logged = 0;
+	for (int bucket_index = 0; bucket_index < p_hashmap->bucket_count; bucket_index++)
+	{
+		const hashmap_generic_bucket_ts * p_current_bucket = p_hashmap->pp_buckets[bucket_index];
+		if (p_current_bucket == NULL)
+			continue;
+
+		printf("\n\tBucket %4d/%-4d", bucket_index + 1, p_hashmap->bucket_count);
+		for (int bucket_entry_index = 0; p_current_bucket != NULL; p_current_bucket = p_current_bucket->p_next, bucket_entry_index++)
+		{
+			/*printf("\n\t  %-4d p_key: %-40p p_value: %-p", bucket_entry_index, p_current_bucket->key.p_data, p_current_bucket->p_value);*/
+			/* TODO-GS: Show the pointers only or apply function through the wrapper? */
+			printf("\n\t  %-4s (%3u bytes) p_key: %-40s p_value: %-30s", "", p_current_bucket->key.data_size, (const char *)p_current_bucket->key.p_data, ((char *)p_current_bucket->p_value));
+		}
+
+		buckets_logged++;
+	}
+
+	if (0x00 == buckets_logged)
+		printf("\n\n\tEmpty\n");
+	printf("\n");
+}
+
+/* Interface function prototypes - Insertion; Retrieval; Deletion */
+hashmap_generic_bool_te hashmap_generic_set(
+	hashmap_generic_instance_ts * p_hashmap,
+	const void * const p_key,
+	size_t key_size,
+	const void * const p_value,
+	size_t value_size)
+{
+	/* Perform insertion */
+	hashmap_generic_bool_te result = hashmap_generic_set_entry(p_hashmap, p_key, key_size, p_value, value_size);
+
+	/* Re-hash the the entire hashmap after doubling the number of buckets when load factor reached */
+	const float new_load_factor = (float) p_hashmap->entry_count / (float)p_hashmap->bucket_count;
+	printf("\n----------------------> Entries: %-3d Buckets: %-3d Load factor: %f", p_hashmap->entry_count, p_hashmap->bucket_count, new_load_factor);
+	???
+	/* TODO_GS: Continue to handle the load factor and re-hashing */
+
+	return result;
 }
 
 hashmap_generic_bool_te hashmap_generic_delete(
