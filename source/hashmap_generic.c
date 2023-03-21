@@ -311,3 +311,48 @@ const void * hashmap_generic_get(
 	/* No corresponding entry found */
 	return NULL;
 }
+
+hashmap_generic_iterator_ts hashmap_generic_iterator(
+	hashmap_generic_instance_ts * p_hashmap
+)
+{
+	hashmap_generic_iterator_ts iterator;
+	iterator.bucket_index = 0;
+	iterator.p_current_bucket_node = p_hashmap->pp_buckets[0];
+	iterator.p_hashmap = p_hashmap;
+	return iterator;
+}
+
+hashmap_generic_bool_te hashmap_generic_iterator_has_next(
+	hashmap_generic_iterator_ts * p_iterator
+)
+{
+	/* Success if the currently selected bucket chain node is usable */
+	if (p_iterator->p_current_bucket_node != NULL)
+		return HASHMAP_GENERIC_TRUE;
+
+	/* Currently selected node is un-usable - Scan buckets for another, usable entry */
+	while (p_iterator->p_current_bucket_node == NULL && p_iterator->bucket_index < p_iterator->p_hashmap->bucket_count - 1)
+		p_iterator->p_current_bucket_node = p_iterator->p_hashmap->pp_buckets[++p_iterator->bucket_index];
+
+	/* Usable bucket found? */
+	return p_iterator->p_current_bucket_node ? HASHMAP_GENERIC_TRUE : HASHMAP_GENERIC_FALSE;
+}
+
+hashmap_generic_iterator_entry hashmap_generic_iterator_get_next(
+	hashmap_generic_iterator_ts * p_iterator
+)
+{
+	/* Return the currently iterated, usable hashmap entry and move to next chain entry */
+	hashmap_generic_iterator_entry entry = {
+		p_iterator->p_current_bucket_node->key.p_data,
+		p_iterator->p_current_bucket_node->p_value,
+		p_iterator->bucket_index
+	};
+
+	/* Move to the next chain node in line */
+	p_iterator->p_current_bucket_node = p_iterator->p_current_bucket_node->p_next;
+
+	/* Return currently iterated entry */
+	return entry;
+}

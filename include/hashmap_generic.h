@@ -30,7 +30,6 @@ typedef struct {
 	hashmap_generic_bucket_ts ** pp_buckets;
 } hashmap_generic_instance_ts;
 
-/* TODO-GS: Split into header and source file + add null guards everywhere */
 /* Interface function prototypes - Creationg and destroyal */
 hashmap_generic_instance_ts * hashmap_generic_create(void);
 void hashmap_generic_destroy(hashmap_generic_instance_ts ** pp_hashmap);
@@ -57,6 +56,30 @@ const void * hashmap_generic_get(
 	hashmap_generic_instance_ts * p_hashmap,
 	const void * const p_key,
 	size_t key_size
+);
+
+typedef struct {
+	int bucket_index;
+	hashmap_generic_instance_ts * p_hashmap;
+	hashmap_generic_bucket_ts * p_current_bucket_node;
+} hashmap_generic_iterator_ts;
+
+typedef struct {
+	const void * const p_key;
+	const void * const p_value;
+	const int bucket_index;
+} hashmap_generic_iterator_entry;
+
+hashmap_generic_iterator_ts hashmap_generic_iterator(
+	hashmap_generic_instance_ts * p_hashmap
+);
+
+hashmap_generic_bool_te hashmap_generic_iterator_has_next(
+	hashmap_generic_iterator_ts * p_iterator
+);
+
+hashmap_generic_iterator_entry hashmap_generic_iterator_get_next(
+	hashmap_generic_iterator_ts * p_iterator
 );
 
 #endif
