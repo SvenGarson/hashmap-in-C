@@ -48,6 +48,10 @@ void hashmap_generic_delete(
 	size_t key_size
 );
 
-void hashmap_generic_get(void);
+const void * hashmap_generic_get(
+	hashmap_generic_instance_ts * p_hashmap,
+	const void * const p_key,
+	size_t key_size
+);
 
 #endif

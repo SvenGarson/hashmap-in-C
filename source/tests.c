@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "..\include\hashmap_generic.h"
 
 int main(void)
@@ -28,6 +29,29 @@ int main(void)
 	const int value4 = 111;
 	hashmap_generic_set(p_hashmap, key4, sizeof(key4), &value4, sizeof(value4));
 	hashmap_generic_visualize(p_hashmap, "Insertion 4");
+
+	/* Retrieving entries */
+	const char * get_keys[] = {
+		key,
+		key2,
+		"Oh captain",
+		key3,
+		key4,
+		"Missing Number"
+	};
+
+	printf("\n\nRetrieving data from hashmap:");
+	for (int get_index = 0; get_index < (int)(sizeof(get_keys) / sizeof(char *)); get_index++)
+	{
+		const char * const p_search_key = get_keys[get_index];
+		const void * p_get_result = hashmap_generic_get(p_hashmap, p_search_key, strlen(p_search_key) + 1);
+		printf(
+			"\n\tKey: %-30s Value: %-16p Translation: %d",
+			p_search_key,
+			p_get_result,
+			p_get_result ? *((int *)p_get_result) : -1
+		);
+	}
 
 	/* Deleting entries */
 	hashmap_generic_delete(p_hashmap, key2, sizeof(key2));

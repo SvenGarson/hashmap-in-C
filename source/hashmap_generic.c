@@ -239,4 +239,36 @@ void hashmap_generic_delete(
 	}
 }
 
-void hashmap_generic_get(void);
+const void * hashmap_generic_get(
+	hashmap_generic_instance_ts * p_hashmap,
+	const void * const p_key,
+	size_t key_size
+)
+{
+	/* Return a pointer to the data when the key exists, NULL otherwise */
+	/* TODO-GS: Again, guard against weird arguments */
+	const uint32_t key_hash = fnv32_hash((const char *) p_key, key_size);
+	const uint32_t hashed_key_bucket_index = key_hash % p_hashmap->bucket_count;
+	hashmap_generic_bucket_ts * p_bucket = p_hashmap->pp_buckets[hashed_key_bucket_index];
+
+	/* Nothing to do for empty bucket */
+	if (p_bucket == NULL)
+		return NULL;
+
+	/* Search for desired bucket chain node and return the value stored */
+	hashmap_generic_bucket_ts * p_search_bucket = p_bucket;
+	for(; p_search_bucket != NULL; p_search_bucket = p_search_bucket->p_next)
+	{
+		if (
+			p_search_bucket->key.data_size == key_size &&
+			memcmp(p_search_bucket->key.p_data, p_key, key_size) == 0
+		)
+		{
+			/* Found chain bucket node to return value from */
+			return p_search_bucket->p_value;
+		}
+	}
+
+	/* No corresponding entry found */
+	return NULL;
+}
