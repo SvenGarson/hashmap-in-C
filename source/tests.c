@@ -20,9 +20,11 @@ int main(void)
 	hashmap_generic_visualize(p_hashmap, "Insertion II");
 
 	const char key3[] = "The Martian I";
-	const int value3 = 55555;
+	const int value3 = 600006;
 	hashmap_generic_set(p_hashmap, key3, sizeof(key3), &value3, sizeof(value3));
 	hashmap_generic_visualize(p_hashmap, "Insertion III");
+
+	/* Deleting entries */
 
 	/* Destroy */
 	hashmap_generic_destroy(&p_hashmap);

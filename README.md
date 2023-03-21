@@ -21,6 +21,20 @@
     - abc & ab
     in both direction where the new one is longer; the same size or shorter than the node data
   + cannot insert duplicates for a particular key data type
+  + adding kv pairs
+    - initializes buckets
+    - finds collisions and overwrites that value
+    - appends when there is no collision
+  + deleting kv pairs
+    - marks the first bucket as un-used when all chain entries deleted
+    - works only for collisions, removes the node accordingly and connect parent and child 
+      nodes (with edge-cases)
+    - deallocates previously allocated memory
+  + guards
+    - against invalid hashmap instance attributes
+    - zero sizes cause operations to not work (difference between zero-length key and 
+      zero-length value?)
+
 - Documentation
   + Analyzing edge cases and limitations, like the largest number of buckets etc.
 

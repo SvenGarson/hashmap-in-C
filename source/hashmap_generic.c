@@ -4,11 +4,10 @@
 #include <string.h>
 
 /* Private helper function definitions */
-uint32_t fnv32_hash(const char *str, size_t len)
+static uint32_t fnv32_hash(const char *str, size_t len)
 {
     unsigned char *s = (unsigned char *)str;	/* unsigned string */
 
-    /* See the FNV parameters at www.isthe.com/chongo/tech/comp/fnv/#FNV-param */
     const uint32_t FNV_32_PRIME = 0x01000193; /* 16777619 */
 
     uint32_t h = 0x811c9dc5; /* 2166136261 */
@@ -22,6 +21,7 @@ uint32_t fnv32_hash(const char *str, size_t len)
     return h;
 }
 
+/* Interface function definitions */
 hashmap_generic_instance_ts * hashmap_generic_create(void)
 {
 	/* Allocate generic hashmap instance */
@@ -74,10 +74,10 @@ void hashmap_generic_visualize(const hashmap_generic_instance_ts * p_hashmap, co
 		if (p_current_bucket->key.p_data == NULL)
 			continue;
 
-		printf("\n\tBucket %4d/%-4d", bucket_index, p_hashmap->bucket_count);
+		printf("\n\tBucket %4d/%-4d", bucket_index + 1, p_hashmap->bucket_count);
 		for (int bucket_entry_index = 0; p_current_bucket != NULL; p_current_bucket = p_current_bucket->p_next, bucket_entry_index++)
 		{
-			printf("\n\t  %-4d p_key: %-40p p_value: %-p", bucket_entry_index, p_current_bucket->key.p_data, p_current_bucket->p_value);
+			/*printf("\n\t  %-4d p_key: %-40p p_value: %-p", bucket_entry_index, p_current_bucket->key.p_data, p_current_bucket->p_value);*/
 			/* TODO-GS: Show the pointers only or apply function through the wrapper? */
 			printf("\n\t  %-4s p_key: %-40s p_value: %-d", "", (const char *)p_current_bucket->key.p_data, *((int *)p_current_bucket->p_value));
 		}
@@ -99,20 +99,6 @@ void hashmap_generic_set(
 	size_t value_size)
 {
 	/* TODO-GS: Guard against weird input here */
-	/* Copy the data the passed pointers point to so the user does not need to worry about memory allocation and deallocation */
-	/*
-			- hash the key
-			- access the corresponding bucket
-			- if bucket unused
-				+ set data at bucket + unlock
-			- if bucket used
-				+ search all buckets and when collisoin
-					+ out with the old
-					+ in with the new
-				+ no collision
-					+ add new node
-					+ prepend node to bucket chain
-	*/
 	const uint32_t key_hash = fnv32_hash((const char *) p_key, key_size);
 	const uint32_t hashed_key_bucket_index = key_hash % p_hashmap->bucket_count;
 	hashmap_generic_bucket_ts * const p_bucket = p_hashmap->p_buckets + hashed_key_bucket_index;
@@ -143,6 +129,7 @@ void hashmap_generic_set(
 	}
 	
 	/* Chain for this bucket not empty - Check for collisions first */
+	hashmap_generic_bucket_ts * p_search_bucket_parent = NULL;
 	hashmap_generic_bucket_ts * p_search_bucket = p_bucket;
 	for (; p_search_bucket != NULL; p_search_bucket = p_search_bucket->p_next)
 	{
@@ -158,13 +145,89 @@ void hashmap_generic_set(
 			free(p_key_copy);
 			free(p_search_bucket->p_value);
 			p_search_bucket->p_value = p_value_copy;
+
+			/* Done */
+			return;
 		}
-		else
+
+		/* Keep track of parent */
+		p_search_bucket_parent = p_search_bucket;
+	}
+
+	/* There was no collision - Append a new node to the bucket chain */
+	hashmap_generic_bucket_ts * p_new_chain_node = malloc(sizeof(hashmap_generic_bucket_ts));
+	if (p_new_chain_node == NULL)
+	{
+		return;
+	}
+
+	p_new_chain_node->key.p_data = p_key_copy;
+	p_new_chain_node->key.data_size = key_size;
+	p_new_chain_node->p_value = p_value_copy;
+	p_new_chain_node->p_next = NULL;
+
+	/* Append to the last node in the current bucket chain */
+	p_search_bucket_parent->p_next = p_new_chain_node;
+}
+
+void dhashmap_generic_delete(
+	hashmap_generic_instance_ts * p_hashmap,
+	const void * const p_key,
+	size_t key_size
+)
+{
+	/*
+			- hash the key
+			- check all buckets at hash index
+				+ if keys collid
+					- deallocate the node
+					- connect parent and child node
+	*/
+	/* TODO-GS: Again, guard against weird arguments */
+	const uint32_t key_hash = fnv32_hash((const char *) p_key, key_size);
+	const uint32_t hashed_key_bucket_index = key_hash % p_hashmap->bucket_count;
+	hashmap_generic_bucket_ts * const p_bucket = p_hashmap->p_buckets + hashed_key_bucket_index;
+
+	/* Nothing to do for empty bucket */
+	if (p_bucket->key.p_data == NULL)
+		return;
+
+	/* Look for a collision */
+	hashmap_generic_bucket_ts * p_search_bucket_parent = NULL;
+	hashmap_generic_bucket_ts * p_search_bucket = p_bucket;
+	for(; p_search_bucket != NULL; p_search_bucket = p_search_bucket->p_next)
+	{
+		/* TODO-GS: Abstract comparison function */
+		if (
+			p_search_bucket->key.data_size == key_size &&
+			memcmp(p_search_bucket->key.p_data, p_key, key_size) == 0
+		)
 		{
-			/* No collision occured */ ???
+			/* Found chain bucket node to delete */
+			const hashmap_generic_bucket_ts * const p_search_bucket_child = p_search_bucket->p_next;
+
+			/* Deallocate the node to delete */
+			free(p_search_bucket->key.p_data);
+			free(p_search_bucket->p_value);
+			free(p_search_bucket);
+
+			/* Connect deleted node parent to what the deleted node child */
+			if (p_search_bucket_parent == NULL)
+			{
+				/* Delete the first node of the bucket chain */
+				/* ??? */
+			}
+			else
+			{
+				/* Delete subsequent node of the bucket chain */
+				/* ??? */
+			}
+				
 		}
+
+		/* Keep track of parent */
+		p_search_bucket_parent = p_search_bucket;
 	}
 }
 
 void hashmap_generic_get(void);
-void hashmap_generic_delete(void);

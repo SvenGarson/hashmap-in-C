@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 /* Defined */
-#define HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS (16)
+#define HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS (1)
 
 /* Datatypes */
 typedef struct {
@@ -41,7 +41,11 @@ void hashmap_generic_set(
 	const void * const p_value,
 	size_t value_size
 );
+void dhashmap_generic_delete(
+	hashmap_generic_instance_ts * p_hashmap,
+	const void * const p_key,
+	size_t key_size
+);
 void hashmap_generic_get(void);
-void hashmap_generic_delete(void);
 
 #endif
