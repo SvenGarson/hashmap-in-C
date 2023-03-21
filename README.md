@@ -2,9 +2,9 @@
  An implementation of a hashmap in C
 
 ## Requirements
+- implement an iterator
 - Add load factor based increase of the bucket count
-- Key and value requirements
-- Ability to store anything for a given hashmap (this means custom key compare function on creation)
+  - grow when load factor reachhed
 - Write a wrapper to use the thing
 - Growing of the associative array when certain load factor reached in terms of bucket count
 - add return values to functions that report the result of the operation when useful
@@ -15,32 +15,16 @@
   + Can a bucket/node key be NULL?
     Just enable using code to specify NULL values for now and see if it's useful
 
-## Finalizing
-- Test suite
-  + Cannot set entry when key NULL
-  + Hash function for different and the same things; argument edge cases
-  + Check collision in a dictionary
-  + Different length of overlapping keys that must not collide
-    - abc & ab
-    in both direction where the new one is longer; the same size or shorter than the node data
-  + cannot insert duplicates for a particular key data type
-  + adding kv pairs
-    - initializes buckets
-    - finds collisions and overwrites that value
-    - appends when there is no collision
-  + deleting kv pairs
-    - marks the first bucket as un-used when all chain entries deleted
-    - works only for collisions, removes the node accordingly and connect parent and child 
-      nodes (with edge-cases)
-    - deallocates previously allocated memory
-  + uniform return codes where interesting
-  + guards
-    - against invalid hashmap instance attributes
-    - zero sizes cause operations to not work (difference between zero-length key and 
-      zero-length value?)
+## Iterator in C
 
-- Documentation
-  + Analyzing edge cases and limitations, like the largest number of buckets etc.
+  iter;
+  hmap_iterator(&iter);
+  while (hmap_iterator_next(&iter))
+  {
+    kv = hmap_iterator_enty()
+    kv.key
+    kv.value
+  }
 
 ## Implementation details to enforce
 - Bucket node with NULL key is un-used

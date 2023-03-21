@@ -64,6 +64,7 @@ hashmap_generic_instance_ts * hashmap_generic_create(void)
 
 	/* Success allocating the hashmap instance - Now allocate and initialize the hashmap buckets */
 	p_new_generic_hashmap->bucket_count = HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS;
+	p_new_generic_hashmap->entry_count = 0;
 	p_new_generic_hashmap->pp_buckets = malloc(sizeof(hashmap_generic_bucket_ts *) * p_new_generic_hashmap->bucket_count);
 	if (p_new_generic_hashmap->pp_buckets == NULL)
 	{
@@ -115,12 +116,13 @@ void hashmap_generic_destroy(hashmap_generic_instance_ts ** pp_hashmap)
 /* Interface function prototypes - Debugging */
 void hashmap_generic_visualize(const hashmap_generic_instance_ts * p_hashmap, const char * p_tag)
 {
-	printf("\n\n# Visualizing generic hashmap tagged '%s':", p_tag);
 	if (p_hashmap == NULL)
 	{
-		printf("\n\n\tNot initialized\n");
+		printf("\n\nHashmap tagged '%s' is not initialized\n", p_tag ? p_tag : "N/A");
 		return;
 	}
+		
+	printf("\n\n# Visualizing generic hashmap tagged '%s' with '%d' entries:", p_tag, p_hashmap->entry_count);
 
 	unsigned int buckets_logged = 0;
 	for (int bucket_index = 0; bucket_index < p_hashmap->bucket_count; bucket_index++)
@@ -180,10 +182,14 @@ hashmap_generic_bool_te hashmap_generic_set(
 		/* The bucket chain is currently empty - Create the first bucket chain entry here */
 		hashmap_generic_bucket_ts * p_new_bucket = create_bucket_node_with_data(p_key_copy, key_size, p_value_copy);
 		if (p_new_bucket != NULL)
+		{
+			p_hashmap->entry_count++;
 			p_hashmap->pp_buckets[hashed_key_bucket_index] = p_new_bucket;
+			return HASHMAP_GENERIC_TRUE;
+		}
 
 		/* Done initializing the bucket chain */
-		return HASHMAP_GENERIC_TRUE;
+		return HASHMAP_GENERIC_FALSE;
 	}
 	
 	/* Chain for this bucket not empty - Check for collisions first */
@@ -210,9 +216,13 @@ hashmap_generic_bool_te hashmap_generic_set(
 	/* There was no collision - Append a new node to the bucket chain */
 	hashmap_generic_bucket_ts * p_append_node = create_bucket_node_with_data(p_key_copy, key_size, p_value_copy);
 	if (p_append_node != NULL)
+	{
+		p_hashmap->entry_count++;
 		p_search_bucket_parent->p_next = p_append_node;
+		return HASHMAP_GENERIC_TRUE;
+	}
 
-	return HASHMAP_GENERIC_TRUE;
+	return HASHMAP_GENERIC_FALSE;
 }
 
 hashmap_generic_bool_te hashmap_generic_delete(
@@ -247,6 +257,7 @@ hashmap_generic_bool_te hashmap_generic_delete(
 		hashmap_generic_bucket_ts * p_search_bucket_child = p_search_bucket->p_next;
 
 		/* Deallocate the node to delete */
+		p_hashmap->entry_count--;
 		destroy_bucket_node(p_search_bucket);
 
 		/* Connect deleted node parent to what the deleted node child */

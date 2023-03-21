@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 /* Defined */
-#define HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS (1)
+#define HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS (16)
 
 /* Datatypes */
 typedef enum {
@@ -25,7 +25,7 @@ typedef struct hashmap_generic_bucket {
 } hashmap_generic_bucket_ts;
 
 typedef struct {
-	/* Hold references needed for the bucket array */
+	int entry_count;
 	int bucket_count;
 	hashmap_generic_bucket_ts ** pp_buckets;
 } hashmap_generic_instance_ts;
