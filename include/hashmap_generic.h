@@ -22,7 +22,7 @@ typedef struct hashmap_generic_bucket {
 typedef struct {
 	/* Hold references needed for the bucket array */
 	int bucket_count;
-	hashmap_generic_bucket_ts * p_buckets;
+	hashmap_generic_bucket_ts ** pp_buckets;
 } hashmap_generic_instance_ts;
 
 /* TODO-GS: Split into header and source file + add null guards everywhere */
@@ -41,11 +41,13 @@ void hashmap_generic_set(
 	const void * const p_value,
 	size_t value_size
 );
+
 void dhashmap_generic_delete(
 	hashmap_generic_instance_ts * p_hashmap,
 	const void * const p_key,
 	size_t key_size
 );
+
 void hashmap_generic_get(void);
 
 #endif

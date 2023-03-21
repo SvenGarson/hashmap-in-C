@@ -21,6 +21,27 @@ static uint32_t fnv32_hash(const char *str, size_t len)
     return h;
 }
 
+static hashmap_generic_bucket_ts * create_bucket_node_with_data(
+	void * p_key_copy,
+	size_t key_size,
+	void * p_value_copy
+)
+{
+	hashmap_generic_bucket_ts * p_new_node = malloc(sizeof(hashmap_generic_bucket_ts));
+	if (p_new_node == NULL)
+	{
+		return NULL;
+	}
+
+	/* Bucket chain node created successfully - Now initialize and return the node */
+	p_new_node->key.p_data = p_key_copy;
+	p_new_node->key.data_size = key_size;
+	p_new_node->p_value = p_value_copy;
+	p_new_node->p_next = NULL;
+
+	return p_new_node;
+}
+
 /* Interface function definitions */
 hashmap_generic_instance_ts * hashmap_generic_create(void)
 {
@@ -33,22 +54,16 @@ hashmap_generic_instance_ts * hashmap_generic_create(void)
 
 	/* Success allocating the hashmap instance - Now allocate and initialize the hashmap buckets */
 	p_new_generic_hashmap->bucket_count = HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS;
-	p_new_generic_hashmap->p_buckets = malloc(sizeof(hashmap_generic_bucket_ts) * p_new_generic_hashmap->bucket_count);
-	if (p_new_generic_hashmap->p_buckets == NULL)
+	p_new_generic_hashmap->pp_buckets = malloc(sizeof(hashmap_generic_bucket_ts *) * p_new_generic_hashmap->bucket_count);
+	if (p_new_generic_hashmap->pp_buckets == NULL)
 	{
 		free(p_new_generic_hashmap);
 		return NULL;
 	}
 
-	/* Success allocating the buckets - Now initialize and return the rest of the hashmap instance */
+	/* Success allocating array of pointers to buckets - Now initialize the buckets to NULL */
 	for (int bucket_index = 0; bucket_index < p_new_generic_hashmap->bucket_count; bucket_index++)
-	{
-		/* Bucket node key of value NULL represents an un-used bucket node */
-		hashmap_generic_bucket_ts * const p_bucket = p_new_generic_hashmap->p_buckets + bucket_index;
-		p_bucket->key.p_data = NULL;
-		p_bucket->p_value = NULL;
-		p_bucket->p_next = NULL;
-	}
+		p_new_generic_hashmap->pp_buckets[bucket_index] = NULL;
 
 	return p_new_generic_hashmap;
 }
@@ -70,8 +85,8 @@ void hashmap_generic_visualize(const hashmap_generic_instance_ts * p_hashmap, co
 	unsigned int buckets_logged = 0;
 	for (int bucket_index = 0; bucket_index < p_hashmap->bucket_count; bucket_index++)
 	{
-		const hashmap_generic_bucket_ts * p_current_bucket = p_hashmap->p_buckets + bucket_index;
-		if (p_current_bucket->key.p_data == NULL)
+		const hashmap_generic_bucket_ts * p_current_bucket = p_hashmap->pp_buckets[bucket_index];
+		if (p_current_bucket == NULL)
 			continue;
 
 		printf("\n\tBucket %4d/%-4d", bucket_index + 1, p_hashmap->bucket_count);
@@ -101,7 +116,7 @@ void hashmap_generic_set(
 	/* TODO-GS: Guard against weird input here */
 	const uint32_t key_hash = fnv32_hash((const char *) p_key, key_size);
 	const uint32_t hashed_key_bucket_index = key_hash % p_hashmap->bucket_count;
-	hashmap_generic_bucket_ts * const p_bucket = p_hashmap->p_buckets + hashed_key_bucket_index;
+	hashmap_generic_bucket_ts * const p_bucket = p_hashmap->pp_buckets[hashed_key_bucket_index];
 
 	/* Copy key and value memory - TODO-GS: Abstract as create node? */
 	void * p_key_copy = malloc(key_size);
@@ -110,19 +125,21 @@ void hashmap_generic_set(
 	{
 		free(p_key_copy);
 		free(p_value_copy);
+
+		/* Done since the data cannot be allocated */
+		return;
 	}
 	memcpy(p_key_copy, p_key, key_size);
 	memcpy(p_value_copy, p_value, value_size);
 
 	/* Key and value memory copied successfully - Update buckets */
-	/* TODO-GS: This is a problem when the NULL values are allowed as keys? */
-	if (p_bucket->key.p_data == NULL)
+	if (p_bucket == NULL)
 	{
 		/* Chain empty for this bucket - Initialize the first bucket in the chain */
-		p_bucket->key.p_data = p_key_copy;
-		p_bucket->key.data_size = key_size;
-		p_bucket->p_value = p_value_copy;
-		p_bucket->p_next = NULL;
+		/* The bucket chain is currently empty - Create the first bucket chain entry here */
+		hashmap_generic_bucket_ts * p_new_bucket = create_bucket_node_with_data(p_key_copy, key_size, p_value_copy);
+		if (p_new_bucket != NULL)
+			p_hashmap->pp_buckets[hashed_key_bucket_index] = p_new_bucket;
 
 		/* Done */
 		return;
@@ -186,10 +203,10 @@ void dhashmap_generic_delete(
 	/* TODO-GS: Again, guard against weird arguments */
 	const uint32_t key_hash = fnv32_hash((const char *) p_key, key_size);
 	const uint32_t hashed_key_bucket_index = key_hash % p_hashmap->bucket_count;
-	hashmap_generic_bucket_ts * const p_bucket = p_hashmap->p_buckets + hashed_key_bucket_index;
+	hashmap_generic_bucket_ts * const p_bucket = p_hashmap->pp_buckets[hashed_key_bucket_index];
 
 	/* Nothing to do for empty bucket */
-	if (p_bucket->key.p_data == NULL)
+	if (p_bucket == NULL)
 		return;
 
 	/* Look for a collision */
