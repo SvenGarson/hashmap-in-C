@@ -70,8 +70,9 @@ typedef struct {
 	const int bucket_index;
 } hashmap_generic_iterator_entry;
 
-hashmap_generic_iterator_ts hashmap_generic_iterator(
-	hashmap_generic_instance_ts * p_hashmap
+void hashmap_generic_iterator(
+	hashmap_generic_instance_ts * p_hashmap,
+	hashmap_generic_iterator_ts * p_iterator
 );
 
 hashmap_generic_bool_te hashmap_generic_iterator_has_next(

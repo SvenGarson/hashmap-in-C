@@ -2,7 +2,6 @@
  An implementation of a hashmap in C
 
 ## Requirements
-- implement an iterator
 - Add load factor based increase of the bucket count
   - grow when load factor reachhed
 - Write a wrapper to use the thing

@@ -312,21 +312,31 @@ const void * hashmap_generic_get(
 	return NULL;
 }
 
-hashmap_generic_iterator_ts hashmap_generic_iterator(
-	hashmap_generic_instance_ts * p_hashmap
+void hashmap_generic_iterator(
+	hashmap_generic_instance_ts * p_hashmap,
+	hashmap_generic_iterator_ts * p_iterator
 )
 {
-	hashmap_generic_iterator_ts iterator;
-	iterator.bucket_index = 0;
-	iterator.p_current_bucket_node = p_hashmap->pp_buckets[0];
-	iterator.p_hashmap = p_hashmap;
-	return iterator;
+	if (p_hashmap == NULL || p_hashmap->entry_count == 0)
+	{
+		/* Cannot iterate through the specified hashmap */
+		p_iterator->bucket_index = -1;
+		return;
+	}
+
+	p_iterator->bucket_index = 0;
+	p_iterator->p_current_bucket_node = p_hashmap->pp_buckets[0];
+	p_iterator->p_hashmap = p_hashmap;
 }
 
 hashmap_generic_bool_te hashmap_generic_iterator_has_next(
 	hashmap_generic_iterator_ts * p_iterator
 )
 {
+	/* Do not iterate when iterator un-usable */
+	if (p_iterator->bucket_index == -1)
+		return HASHMAP_GENERIC_FALSE;
+
 	/* Success if the currently selected bucket chain node is usable */
 	if (p_iterator->p_current_bucket_node != NULL)
 		return HASHMAP_GENERIC_TRUE;
