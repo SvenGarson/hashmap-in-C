@@ -2,11 +2,13 @@
  An implementation of a hashmap in C
 
 ## Requirements
+- Add load factor based increase of the bucket count
 - Key and value requirements
 - Ability to store anything for a given hashmap (this means custom key compare function on creation)
 - Write a wrapper to use the thing
 - Growing of the associative array when certain load factor reached in terms of bucket count
 - add return values to functions that report the result of the operation when useful
+- rename buckets to nodes, since that is a different thing
 - Q & A
   + Can a bucket/node key be NULL?
     Yes, a key of null represents an un-used bucket node?
@@ -15,6 +17,7 @@
 
 ## Finalizing
 - Test suite
+  + Cannot set entry when key NULL
   + Hash function for different and the same things; argument edge cases
   + Check collision in a dictionary
   + Different length of overlapping keys that must not collide
@@ -30,6 +33,7 @@
     - works only for collisions, removes the node accordingly and connect parent and child 
       nodes (with edge-cases)
     - deallocates previously allocated memory
+  + uniform return codes where interesting
   + guards
     - against invalid hashmap instance attributes
     - zero sizes cause operations to not work (difference between zero-length key and 

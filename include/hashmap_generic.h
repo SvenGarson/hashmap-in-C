@@ -8,6 +8,11 @@
 #define HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS (1)
 
 /* Datatypes */
+typedef enum {
+	HASHMAP_GENERIC_FALSE = 0,
+	HASHMAP_GENERIC_TRUE = 1
+} hashmap_generic_bool_te;
+
 typedef struct {
 	void * p_data;
 	size_t data_size;
@@ -34,7 +39,7 @@ void hashmap_generic_destroy(hashmap_generic_instance_ts ** pp_hashmap);
 void hashmap_generic_visualize(const hashmap_generic_instance_ts * p_hashmap, const char * p_tag);
 
 /* Interface function prototypes - Insert; Retrieval; Deletion */
-void hashmap_generic_set(
+hashmap_generic_bool_te hashmap_generic_set(
 	hashmap_generic_instance_ts * p_hashmap,
 	const void * const p_key,
 	size_t key_size,
@@ -42,7 +47,7 @@ void hashmap_generic_set(
 	size_t value_size
 );
 
-void hashmap_generic_delete(
+hashmap_generic_bool_te hashmap_generic_delete(
 	hashmap_generic_instance_ts * p_hashmap,
 	const void * const p_key,
 	size_t key_size
