@@ -15,7 +15,7 @@ compile : $(OBJS)
 	cls
 	$(CC) $(OBJS) $(COMPILER_FLAGS) -o $(OBJ_NAME)
 
-run_tests:
+run:
 	builds/driver
 
-compile_and_run_tests: compile run_tests
+compile_and_run: compile run

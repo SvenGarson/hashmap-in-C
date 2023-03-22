@@ -12,7 +12,7 @@ static uint32_t fnv32_hash(const char *str, size_t len)
 
     uint32_t h = 0x811c9dc5; /* 2166136261 */
     while (len--) {
-        /* xor the bottom with the current octet */
+        /* xor the bottom with the cfurrent octet */
         h ^= *s++;
         /* multiply by the 32 bit FNV magic prime mod 2^32 */
         h *= FNV_32_PRIME;
@@ -24,7 +24,8 @@ static uint32_t fnv32_hash(const char *str, size_t len)
 static hashmap_generic_bucket_ts * create_bucket_node_with_data(
 	void * p_key_copy,
 	size_t key_size,
-	void * p_value_copy
+	void * p_value_copy,
+	size_t value_size
 )
 {
 	hashmap_generic_bucket_ts * p_new_node = malloc(sizeof(hashmap_generic_bucket_ts));
@@ -36,7 +37,8 @@ static hashmap_generic_bucket_ts * create_bucket_node_with_data(
 	/* Bucket chain node created successfully - Now initialize and return the node */
 	p_new_node->key.p_data = p_key_copy;
 	p_new_node->key.data_size = key_size;
-	p_new_node->p_value = p_value_copy;
+	p_new_node->value.p_data = p_value_copy;
+	p_new_node->value.data_size = value_size;
 	p_new_node->p_next = NULL;
 
 	return p_new_node;
@@ -48,7 +50,7 @@ static void destroy_bucket_node(hashmap_generic_bucket_ts * p_bucket_node_to_del
 		return;
 
 	free(p_bucket_node_to_delete->key.p_data);
-	free(p_bucket_node_to_delete->p_value);
+	free(p_bucket_node_to_delete->value.p_data);
 	free(p_bucket_node_to_delete);
 }
 
@@ -99,7 +101,7 @@ static hashmap_generic_bool_te hashmap_generic_set_entry(
 	if (p_bucket == NULL)
 	{
 		/* The bucket chain is currently empty - Create the first bucket chain entry here */
-		hashmap_generic_bucket_ts * p_new_bucket = create_bucket_node_with_data(p_key_copy, key_size, p_value_copy);
+		hashmap_generic_bucket_ts * p_new_bucket = create_bucket_node_with_data(p_key_copy, key_size, p_value_copy, value_size);
 		if (p_new_bucket != NULL)
 		{
 			p_hashmap->entry_count++;
@@ -125,15 +127,15 @@ static hashmap_generic_bool_te hashmap_generic_set_entry(
 		
 		/* Collision occured - Overwrite the existing bucket value */
 		free(p_key_copy);
-		free(p_search_bucket->p_value);
-		p_search_bucket->p_value = p_value_copy;
+		free(p_search_bucket->value.p_data);
+		p_search_bucket->value.p_data = p_value_copy;
 
 		/* Done since a key is expected to be unique across a hashmap instance */
 		return HASHMAP_GENERIC_TRUE;
 	}
 
 	/* There was no collision - Append a new node to the bucket chain */
-	hashmap_generic_bucket_ts * p_append_node = create_bucket_node_with_data(p_key_copy, key_size, p_value_copy);
+	hashmap_generic_bucket_ts * p_append_node = create_bucket_node_with_data(p_key_copy, key_size, p_value_copy, value_size);
 	if (p_append_node != NULL)
 	{
 		p_hashmap->entry_count++;
@@ -145,8 +147,14 @@ static hashmap_generic_bool_te hashmap_generic_set_entry(
 }
 
 /* Interface function definitions */
-hashmap_generic_instance_ts * hashmap_generic_create(void)
+hashmap_generic_instance_ts * hashmap_generic_create(int number_of_initial_buckets)
 {
+	/* Guard against invalid number of buckets */
+	if (number_of_initial_buckets <= 0)
+		return NULL;
+
+	printf("\n----> Create new hashmap with initial buckets: %d", number_of_initial_buckets);
+
 	/* Allocate generic hashmap instance */
 	hashmap_generic_instance_ts * const p_new_generic_hashmap = malloc(sizeof(hashmap_generic_instance_ts));
 	if (p_new_generic_hashmap == NULL)
@@ -155,7 +163,7 @@ hashmap_generic_instance_ts * hashmap_generic_create(void)
 	}
 
 	/* Success allocating the hashmap instance - Now allocate and initialize the hashmap buckets */
-	p_new_generic_hashmap->bucket_count = HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS;
+	p_new_generic_hashmap->bucket_count = number_of_initial_buckets;
 	p_new_generic_hashmap->entry_count = 0;
 	p_new_generic_hashmap->pp_buckets = malloc(sizeof(hashmap_generic_bucket_ts *) * p_new_generic_hashmap->bucket_count);
 	if (p_new_generic_hashmap->pp_buckets == NULL)
@@ -199,7 +207,7 @@ void hashmap_generic_visualize(const hashmap_generic_instance_ts * p_hashmap, co
 		return;
 	}
 		
-	printf("\n\n# Visualizing generic hashmap tagged '%s' with '%d' entries:", p_tag, p_hashmap->entry_count);
+	printf("\n\n# Visualizing generic hashmap tagged '%s' with '%d' entries and '%d' buckets", p_tag, p_hashmap->entry_count, p_hashmap->bucket_count);
 
 	unsigned int buckets_logged = 0;
 	for (int bucket_index = 0; bucket_index < p_hashmap->bucket_count; bucket_index++)
@@ -213,7 +221,7 @@ void hashmap_generic_visualize(const hashmap_generic_instance_ts * p_hashmap, co
 		{
 			/*printf("\n\t  %-4d p_key: %-40p p_value: %-p", bucket_entry_index, p_current_bucket->key.p_data, p_current_bucket->p_value);*/
 			/* TODO-GS: Show the pointers only or apply function through the wrapper? */
-			printf("\n\t  %-4s (%3u bytes) p_key: %-40s p_value: %-30s", "", p_current_bucket->key.data_size, (const char *)p_current_bucket->key.p_data, ((char *)p_current_bucket->p_value));
+			printf("\n\t  %-4s (%3u bytes) p_key: %-20s (%3u bytes) p_value: %-20s", "", p_current_bucket->key.data_size, (char *)p_current_bucket->key.p_data, p_current_bucket->value.data_size, (char *)p_current_bucket->value.p_data);
 		}
 
 		buckets_logged++;
@@ -237,10 +245,46 @@ hashmap_generic_bool_te hashmap_generic_set(
 
 	/* Re-hash the the entire hashmap after doubling the number of buckets when load factor reached */
 	const float new_load_factor = (float) p_hashmap->entry_count / (float)p_hashmap->bucket_count;
-	printf("\n----------------------> Entries: %-3d Buckets: %-3d Load factor: %f", p_hashmap->entry_count, p_hashmap->bucket_count, new_load_factor);
-	???
-	/* TODO_GS: Continue to handle the load factor and re-hashing */
+	if (new_load_factor >= HASHMAP_GENERIC_LOAD_FACTOR)
+	{
+		/* Double the bucket capacity */
+		/*
+			- Create new hash with double the number of buckets
+			- enumerate and insert all entries into the new, twice-sized hash
+			- deallocate the old hash
+			- re-wire the old hash to point to the new hash
+		*/
+		/* Create new hashmap with double the bucket capacity */
+		hashmap_generic_instance_ts * p_grown_hashmap = hashmap_generic_create(p_hashmap->bucket_count * 2);
 
+		/* Insert all entries of the current hash into the grown hash */
+		hashmap_generic_iterator_ts iterator;
+		hashmap_generic_iterator(p_hashmap, &iterator);
+
+		while (hashmap_generic_iterator_has_next(&iterator))
+		{
+			const hashmap_generic_iterator_entry entry = hashmap_generic_iterator_get_next(&iterator);
+
+			hashmap_generic_bool_te remapping_entry_success = hashmap_generic_set(
+				p_grown_hashmap,
+				entry.p_key,
+				entry.key_size,
+				entry.p_value,
+				entry.value_size
+			);
+		}
+
+		/* Destroy the old hashmap */
+		hashmap_generic_instance_ts * const p_original_instance = p_hashmap;
+		hashmap_generic_destroy(&p_hashmap);
+
+		/* Point the passed instance to the new, grown hashmap instance */
+		p_original_instance->entry_count = p_grown_hashmap->entry_count;
+		p_original_instance->bucket_count = p_grown_hashmap->bucket_count;
+		p_original_instance->pp_buckets = p_grown_hashmap->pp_buckets;
+	}
+
+	/* TODO-GS: Return whethere any problem arose during creation; deallocation; re-hashing */
 	return result;
 }
 
@@ -324,7 +368,7 @@ const void * hashmap_generic_get(
 			continue;
 
 		/* Found chain bucket node to return value from */
-		return p_search_bucket->p_value;
+		return p_search_bucket->value.p_data;
 	}
 
 	/* No corresponding entry found */
@@ -375,8 +419,9 @@ hashmap_generic_iterator_entry hashmap_generic_iterator_get_next(
 	/* Return the currently iterated, usable hashmap entry and move to next chain entry */
 	hashmap_generic_iterator_entry entry = {
 		p_iterator->p_current_bucket_node->key.p_data,
-		p_iterator->p_current_bucket_node->p_value,
-		p_iterator->bucket_index
+		p_iterator->p_current_bucket_node->key.data_size,
+		p_iterator->p_current_bucket_node->value.p_data,
+		p_iterator->p_current_bucket_node->value.data_size
 	};
 
 	/* Move to the next chain node in line */

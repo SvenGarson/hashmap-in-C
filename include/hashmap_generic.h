@@ -4,9 +4,6 @@
 /* Includes */
 #include <stdlib.h>
 
-/* Defined */
-#define HASHMAP_GENERIC_NUMBER_OF_STARTING_BUCKETS (16)
-
 /* Constants */
 static const float HASHMAP_GENERIC_LOAD_FACTOR = 0.75f;
 
@@ -23,7 +20,7 @@ typedef struct {
 
 typedef struct hashmap_generic_bucket {
 	hashmap_generic_data_ts key;
-	void * p_value;
+	hashmap_generic_data_ts value;
 	struct hashmap_generic_bucket * p_next;
 } hashmap_generic_bucket_ts;
 
@@ -34,7 +31,7 @@ typedef struct {
 } hashmap_generic_instance_ts;
 
 /* Interface function prototypes - Creationg and destroyal */
-hashmap_generic_instance_ts * hashmap_generic_create(void);
+hashmap_generic_instance_ts * hashmap_generic_create(int number_of_initial_buckets);
 void hashmap_generic_destroy(hashmap_generic_instance_ts ** pp_hashmap);
 
 /* Interface function prototypes - Debugging */
@@ -69,8 +66,9 @@ typedef struct {
 
 typedef struct {
 	const void * const p_key;
+	const size_t key_size;
 	const void * const p_value;
-	const int bucket_index;
+	const size_t value_size;
 } hashmap_generic_iterator_entry;
 
 void hashmap_generic_iterator(

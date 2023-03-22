@@ -5,7 +5,7 @@
 int main(void)
 {
 	/* Test the wrapper interface */
-	hashmap_generic_instance_ts * p_hashmap = hashmap_generic_create();
+	hashmap_generic_instance_ts * p_hashmap = hashmap_generic_create(16);
 
 	if (p_hashmap == NULL)
 	{
@@ -16,37 +16,22 @@ int main(void)
 	hashmap_generic_visualize(p_hashmap, "Initial state");
 
 	/* Use interface */
-	const char key1[] = "Iron Man";
-	const char value1[] = "Quote: 'I am Iron Man'";
-	hashmap_generic_set(p_hashmap, key1, sizeof(key1), value1, sizeof(value1));
-
-	const char key2[] = "Thor";
-	const char value2[] = "Quote: 'God of Thunder'";
-	hashmap_generic_set(p_hashmap, key2, sizeof(key2), value2, sizeof(value2));
-
-	const char key3[] = "Waterdude";
-	const char value3[] = "Quote: 'Swisch Swiiisch'";
-	hashmap_generic_set(p_hashmap, key3, sizeof(key3), value3, sizeof(value3));
-
-	hashmap_generic_visualize(p_hashmap, "Before deletion");
-	
-	/* Iteration */
-	hashmap_generic_iterator_ts iter;
-	hashmap_generic_iterator(p_hashmap, &iter);
-	while (hashmap_generic_iterator_has_next(&iter))
+	char key_buffer[256];
+	char value_buffer[256];
+	for (int i = 1; i <= 16; i++)
 	{
-		hashmap_generic_iterator_entry entry = hashmap_generic_iterator_get_next(&iter);
-		printf("\nEntry bucket: %-3d Key: %-30s Value: %-30s", entry.bucket_index, (char *) entry.p_key, (char *) entry.p_value);
+		snprintf(key_buffer, 256, "%d", i);
+		snprintf(value_buffer, 256, "%d", i * 10 + 1);
+
+		const int cap = p_hashmap->bucket_count;
+		hashmap_generic_set(p_hashmap, key_buffer, strlen(key_buffer) + 1, value_buffer, strlen(value_buffer) + 1);
+		if (p_hashmap->bucket_count != cap)
+		{
+			printf("\n\n======================> Changed cap from %d to %d", cap, p_hashmap->bucket_count);
+		}
 	}
 
-	hashmap_generic_visualize(p_hashmap, "Before deletion");
-	hashmap_generic_delete(p_hashmap, key1, sizeof(key1));
-	hashmap_generic_delete(p_hashmap, key2, sizeof(key2));
-	hashmap_generic_delete(p_hashmap, key3, sizeof(key3));
-	hashmap_generic_delete(p_hashmap, key3, sizeof(key3));
-	hashmap_generic_delete(p_hashmap, key3, sizeof(key3));
-
-	hashmap_generic_visualize(p_hashmap, "After deletion");
+	hashmap_generic_visualize(p_hashmap, "After adding stuff");
 	hashmap_generic_destroy(&p_hashmap);
 
 	/* Return to OS successfully */
