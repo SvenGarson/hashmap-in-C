@@ -258,13 +258,6 @@ hashmap_generic_bool_te hashmap_generic_set(
 	const float new_load_factor = (float) p_hashmap->entry_count / (float)p_hashmap->bucket_count;
 	if (new_load_factor >= HASHMAP_GENERIC_LOAD_FACTOR)
 	{
-		/* Double the bucket capacity */
-		/*
-			- Create new hash with double the number of buckets
-			- enumerate and insert all entries into the new, twice-sized hash
-			- deallocate the old hash
-			- re-wire the old hash to point to the new hash
-		*/
 		/* Create new hashmap with double the bucket capacity */
 		hashmap_generic_instance_ts * p_grown_hashmap = hashmap_generic_create(p_hashmap->bucket_count * 2);
 		if (p_grown_hashmap == NULL)		
