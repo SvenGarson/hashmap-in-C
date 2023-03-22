@@ -1,5 +1,5 @@
 # Source files to compile
-OBJS = source/tests.c source/hashmap_generic.c
+OBJS = source/main.c source/hashmap_generic.c
 
 # Choose compiler
 CC = gcc

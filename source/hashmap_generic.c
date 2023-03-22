@@ -218,7 +218,7 @@ void hashmap_generic_visualize(const hashmap_generic_instance_ts * p_hashmap, co
 		return;
 	}
 		
-	printf("\n\n# Visualizing generic hashmap tagged '%s' with '%d' entries and '%d' buckets", p_tag, p_hashmap->entry_count, p_hashmap->bucket_count);
+	printf("\n\n# Visualizing generic hashmap tagged '%s' with '%d' entries and '%d' buckets:", p_tag, p_hashmap->entry_count, p_hashmap->bucket_count);
 
 	unsigned int buckets_logged = 0;
 	for (int bucket_index = 0; bucket_index < p_hashmap->bucket_count; bucket_index++)
@@ -230,9 +230,7 @@ void hashmap_generic_visualize(const hashmap_generic_instance_ts * p_hashmap, co
 		printf("\n\tBucket %4d/%-4d", bucket_index + 1, p_hashmap->bucket_count);
 		for (int bucket_entry_index = 0; p_current_bucket != NULL; p_current_bucket = p_current_bucket->p_next, bucket_entry_index++)
 		{
-			/*printf("\n\t  %-4d p_key: %-40p p_value: %-p", bucket_entry_index, p_current_bucket->key.p_data, p_current_bucket->p_value);*/
-			/* TODO-GS: Show the pointers only or apply function through the wrapper? */
-			printf("\n\t  %-4s (%3u bytes) p_key: %-20s (%3u bytes) p_value: %-20s", "", p_current_bucket->key.data_size, (char *)p_current_bucket->key.p_data, p_current_bucket->value.data_size, (char *)p_current_bucket->value.p_data);
+			printf("\n\t  %-4d p_key: %-16p p_value: %-16p", bucket_entry_index, p_current_bucket->key.p_data, p_current_bucket->value.p_data);
 		}
 
 		buckets_logged++;
