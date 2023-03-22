@@ -146,14 +146,31 @@ static hashmap_generic_bool_te hashmap_generic_set_entry(
 	return HASHMAP_GENERIC_FALSE;
 }
 
+static void clear(
+	hashmap_generic_instance_ts * p_hashmap
+)
+{
+	if (p_hashmap == NULL || p_hashmap->bucket_count <= 0)
+		return;
+	
+	/* Deallocate all buckets along with the corresponding key and value */
+	hashmap_generic_bucket_ts * p_deletion_bucket = p_hashmap->pp_buckets[0];
+	while (p_deletion_bucket != NULL)
+	{
+		hashmap_generic_bucket_ts * p_deletion_bucket_child = p_deletion_bucket->p_next;
+		destroy_bucket_node(p_deletion_bucket);
+		p_deletion_bucket = p_deletion_bucket_child;
+	}
+
+	p_hashmap->entry_count = 0;
+}
+
 /* Interface function definitions */
 hashmap_generic_instance_ts * hashmap_generic_create(int number_of_initial_buckets)
 {
 	/* Guard against invalid number of buckets */
 	if (number_of_initial_buckets <= 0)
 		return NULL;
-
-	printf("\n----> Create new hashmap with initial buckets: %d", number_of_initial_buckets);
 
 	/* Allocate generic hashmap instance */
 	hashmap_generic_instance_ts * const p_new_generic_hashmap = malloc(sizeof(hashmap_generic_instance_ts));
@@ -181,17 +198,11 @@ hashmap_generic_instance_ts * hashmap_generic_create(int number_of_initial_bucke
 
 void hashmap_generic_destroy(hashmap_generic_instance_ts ** pp_hashmap)
 {
-	if (pp_hashmap == NULL || (*pp_hashmap)->bucket_count <= 0)
-		return;
-	
-	/* Deallocate all buckets along with the corresponding key and value */
-	hashmap_generic_bucket_ts * p_deletion_bucket = (*pp_hashmap)->pp_buckets[0];
-	while (p_deletion_bucket != NULL)
-	{
-		hashmap_generic_bucket_ts * p_deletion_bucket_child = p_deletion_bucket->p_next;
-		destroy_bucket_node(p_deletion_bucket);
-		p_deletion_bucket = p_deletion_bucket_child;
-	}
+	/* Clear all entry nodes */
+	clear(*pp_hashmap);
+
+	/* Deallocate bucket pointer array */
+	free((*pp_hashmap)->pp_buckets);
 
 	/* Deallocate the hashmap instance */
 	free(*pp_hashmap);
@@ -242,6 +253,8 @@ hashmap_generic_bool_te hashmap_generic_set(
 {
 	/* Perform insertion */
 	hashmap_generic_bool_te result = hashmap_generic_set_entry(p_hashmap, p_key, key_size, p_value, value_size);
+	if (result == HASHMAP_GENERIC_FALSE)
+		return HASHMAP_GENERIC_FALSE;
 
 	/* Re-hash the the entire hashmap after doubling the number of buckets when load factor reached */
 	const float new_load_factor = (float) p_hashmap->entry_count / (float)p_hashmap->bucket_count;
@@ -256,6 +269,8 @@ hashmap_generic_bool_te hashmap_generic_set(
 		*/
 		/* Create new hashmap with double the bucket capacity */
 		hashmap_generic_instance_ts * p_grown_hashmap = hashmap_generic_create(p_hashmap->bucket_count * 2);
+		if (p_grown_hashmap == NULL)		
+			return HASHMAP_GENERIC_FALSE;
 
 		/* Insert all entries of the current hash into the grown hash */
 		hashmap_generic_iterator_ts iterator;
@@ -272,20 +287,25 @@ hashmap_generic_bool_te hashmap_generic_set(
 				entry.p_value,
 				entry.value_size
 			);
+
+			if (remapping_entry_success == HASHMAP_GENERIC_FALSE)
+				return HASHMAP_GENERIC_FALSE;
 		}
 
-		/* Destroy the old hashmap */
-		hashmap_generic_instance_ts * const p_original_instance = p_hashmap;
-		hashmap_generic_destroy(&p_hashmap);
+		/* Clear all entries from the old hashmap */
+		clear(p_hashmap);
+
+		/* Free the old bucket array  */
+		free(p_hashmap->pp_buckets);
 
 		/* Point the passed instance to the new, grown hashmap instance */
-		p_original_instance->entry_count = p_grown_hashmap->entry_count;
-		p_original_instance->bucket_count = p_grown_hashmap->bucket_count;
-		p_original_instance->pp_buckets = p_grown_hashmap->pp_buckets;
+		p_hashmap->entry_count = p_grown_hashmap->entry_count;
+		p_hashmap->bucket_count = p_grown_hashmap->bucket_count;
+		p_hashmap->pp_buckets = p_grown_hashmap->pp_buckets;
 	}
 
-	/* TODO-GS: Return whethere any problem arose during creation; deallocation; re-hashing */
-	return result;
+	/* Success */
+	return HASHMAP_GENERIC_TRUE;
 }
 
 hashmap_generic_bool_te hashmap_generic_delete(

@@ -1,40 +1,10 @@
 # hashmap-in-C
- An implementation of a hashmap in C
+An implementation of a hashmap in C.
 
-## Requirements
-- Add load factor based increase of the bucket count
-  - grow when load factor reachhed
-- Write a wrapper to use the thing
-- Growing of the associative array when certain load factor reached in terms of bucket count
-- add return values to functions that report the result of the operation when useful
-- rename buckets to nodes, since that is a different thing
-- Q & A
-  + Can a bucket/node key be NULL?
-    Yes, a key of null represents an un-used bucket node?
-  + Can a bucket/node key be NULL?
-    Just enable using code to specify NULL values for now and see if it's useful
+## About this projects
+The goal of this little project was to understand the basics of the implementation of a hashmap. This logic is not thoroughly tested and should not actually be used for anything.
 
-## Iterator in C
+The idea of the interface is that the user can create hashmap instances and set/delete/get values based on a generic key and value type using void pointers while providing the key and value data sizes so the user does not need to worry about managing memory, but the implementation will take care of the memory allocation and deallocation by creating copies of the provided keys and values based on the specified data sizes in bytes.
 
-  iter;
-  hmap_iterator(&iter);
-  while (hmap_iterator_next(&iter))
-  {
-    kv = hmap_iterator_enty()
-    kv.key
-    kv.value
-  }
-
-## Implementation details to enforce
-- Bucket node with NULL key is un-used
-
-## Interface
-- Insertion
-  + Set value (void *) for key (char *)
-- Retrieval
-  + Get value (void *) for key (char *)
-- Deletion
-  + Delete value (void *) for key (char *)
-- Utility
-  + Contains value (void *) for key (char *)
-- Debug printing the contents
+## Disclaimer
+Since this implementation was not thoroughly tested in terms of memory allocation and deallocation, there may be memory leaks for edge-cases.
